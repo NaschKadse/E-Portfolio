@@ -51,7 +51,8 @@ export class MyUserService implements UserService<User, Credentials> {
         const userProfile = {
           id: user.id,
           name: userName,
-          [securityId]: `${user.id}`
+          [securityId]: `${user.id}`,
+          role: user.role,
         }
         return userProfile;
       }

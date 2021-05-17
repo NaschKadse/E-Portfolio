@@ -1,14 +1,11 @@
-import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
-import {
-  RestExplorerBindings,
-  RestExplorerComponent,
-} from '@loopback/rest-explorer';
-import {RepositoryMixin} from '@loopback/repository';
-import {OpenApiSpec, RestApplication} from '@loopback/rest';
-import {ServiceMixin} from '@loopback/service-proxy';
+import { BootMixin } from '@loopback/boot';
+import { ApplicationConfig, createBindingFromClass } from '@loopback/core';
+import { RestExplorerBindings, RestExplorerComponent } from '@loopback/rest-explorer';
+import { RepositoryMixin } from '@loopback/repository';
+import { OpenApiSpec, RestApplication } from '@loopback/rest';
+import { ServiceMixin } from '@loopback/service-proxy';
 import path from 'path';
-import {MySequence} from './sequence';
+import { MySequence } from './sequence';
 import { BcryptHasher } from './services/hash.password.bcrypt-service';
 import { MyUserService } from './services/user-service';
 import { JWTService } from './services/jwt-service';
@@ -16,6 +13,7 @@ import { SECURITY_SCHEME_SPEC, SECURITY_SPEC } from './utils/security-spec';
 import { PasswordHasherBindings, TokenServiceBindings, TokenServiceConstants, UserServiceBindings } from './keys';
 import { AuthenticationComponent, registerAuthenticationStrategy } from '@loopback/authentication';
 import { JWTAuthenticationStrategy } from './authentication-strategies/jwt-strategy';
+import { AuthorizationComponent } from '@loopback/authorization';
 
 export {ApplicationConfig};
 
@@ -38,7 +36,10 @@ export class EPortfolioApplication extends BootMixin(
     // Set up bindings
     this.setupBinding();
 
+    this.component(AuthorizationComponent);
     this.component(AuthenticationComponent);
+
+    this.add(createBindingFromClass(JWTAuthenticationStrategy));
     registerAuthenticationStrategy(this, JWTAuthenticationStrategy);
 
     // Set up the custom sequence

@@ -1,47 +1,38 @@
-import { authenticate } from '@loopback/authentication';
+import { authenticate, TokenService } from '@loopback/authentication';
+import { authorize } from '@loopback/authorization';
 import { inject } from '@loopback/core';
-import {
-  Count,
-  CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  post,
-  param,
-  get,
-  getModelSchemaRef,
-  patch,
-  put,
-  del,
-  requestBody,
-  response,
-} from '@loopback/rest';
+import { Count, CountSchema, Filter, FilterExcludingWhere, model, property, repository, Where } from '@loopback/repository';
+import { post, param, get, getModelSchemaRef, patch, put, del, requestBody, response } from '@loopback/rest';
 import { SecurityBindings, securityId, UserProfile } from '@loopback/security';
 import _ from 'lodash';
 import { PasswordHasherBindings, TokenServiceBindings, UserServiceBindings } from '../keys';
+import { basicAuthorization } from '../middlewares/auth.midd';
 import { User } from '../models';
 import { Credentials, UserRepository } from '../repositories';
 import { BcryptHasher } from '../services/hash.password.bcrypt-service';
-import { JWTService } from '../services/jwt-service';
 import { MyUserService } from '../services/user-service';
 import { validateCredentials } from '../services/validator-service';
 import { UserProfileSchema } from './specs/user-controller.spec';
 
-
+@model()
+export class NewUserRequest extends User {
+  @property({
+    type: 'string',
+    required: true,
+  })
+  password: string;
+}
 
 export class UserController {
   constructor(
     @repository(UserRepository)
-    public userRepository : UserRepository,
+    public userRepository: UserRepository,
     @inject(PasswordHasherBindings.PASSWORD_HASHER)
     public hasher: BcryptHasher,
     @inject(UserServiceBindings.USER_SERVICE)
     public userService: MyUserService,
     @inject(TokenServiceBindings.TOKEN_SERVICE)
-    public jwtService: JWTService,
+    public jwtService: TokenService,
   ) {}
 
   @post('/users/signup')
@@ -55,18 +46,26 @@ export class UserController {
         'application/json': {
           schema: getModelSchemaRef(User, {
             title: 'NewUser',
-            exclude: ['id'],
+            exclude: ['id', 'role'],
           }),
         },
       },
     })
-    user: Omit<User, 'id'>,
+    newUserRequest: Credentials,
+    //user: Omit<User, 'id'>,
   ): Promise<User> {
+    newUserRequest.role = 'user';
     //validate user credentials
-    validateCredentials(_.pick(user, ['email', 'password']));
+    validateCredentials(_.pick(newUserRequest, ['email', 'password']));
     //encrypt user password
-    user.password = await this.hasher.hashPassword(user.password);
-    return this.userRepository.create(user);
+    //encrypt the password
+    const password = await this.hasher.hashPassword(
+    newUserRequest.password,
+    );
+   
+    return await this.userRepository.create(
+      _.omit(newUserRequest, 'password'),
+    );
   }
 
   @post('/users/login', {
@@ -121,7 +120,7 @@ export class UserController {
     // create a JSON Web Token based on the user profile
     const token = await this.jwtService.generateToken(userProfile);
 
-    return Promise.resolve({token});
+    return {token};
   }
 
   @get('/users/me', {
@@ -143,6 +142,69 @@ export class UserController {
   ): Promise<User> {
 
     const userId = currentUserProfile[securityId];
+    return this.userRepository.findById(Number(userId));
+  }
+
+  @del('/users/{id}')
+  @response(204, {
+    description: 'User DELETE success',
+  })
+  @authenticate('jwt')
+  @authorize({
+    allowedRoles: ['admin'],
+    voters: [basicAuthorization],
+  })
+  async deleteById(@param.path.number('id') id: number): Promise<void> {
+    await this.userRepository.deleteById(id);
+  }
+
+  @post('/users/signup/admin')
+  @response(200, {
+    description: 'User',
+    content: {'application/json': {schema: getModelSchemaRef(User, {exclude: ['password'],})}},
+  })
+  async createAdmin(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(User, {
+            title: 'NewAdmin',
+            exclude: ['id', 'role'],
+          }),
+        },
+      },
+    })
+    admin: Credentials,
+    //user: Omit<User, 'id'>,
+  ): Promise<User> {
+    admin.role = 'admin';
+    //validate user credentials
+    validateCredentials(_.pick(admin, ['email', 'password']));
+    //encrypt user password
+    admin.password = await this.hasher.hashPassword(admin.password);
+    return this.userRepository.create(admin);
+  }
+
+  @get('/users/{id}', {
+    responses: {
+      '200': {
+        description: 'User',
+        content: {
+          'application/json': {
+            schema: {
+              'x-ts-type': User,
+            },
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  @authorize({
+    allowedRoles: ['admin'],
+    voters: [basicAuthorization],
+  })
+  async findById(@param.path.string('id') userId: string): Promise<User> {
     return this.userRepository.findById(Number(userId));
   }
 }

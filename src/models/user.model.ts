@@ -1,7 +1,20 @@
 import {Entity, model, property, hasMany} from '@loopback/repository';
 import {Order} from './order.model';
 
-@model()
+@model({
+  settings: {
+    indexes: {
+      uniqueEmail: {
+        keys: {
+          email: 1,
+        },
+        options: {
+          unique: true,
+        },
+      },
+    },
+  },
+})
 export class User extends Entity {
   @property({
     type: 'number',
@@ -13,9 +26,6 @@ export class User extends Entity {
   @property({
     type: 'string',
     required: true,
-    index: {
-      unique: true
-  }
   })
   email: string;
 
@@ -37,6 +47,12 @@ export class User extends Entity {
     required: true,
   })
   lastName: string;
+
+  @property({
+    type: 'string',
+    nullable: false,
+  })
+  role: string;
 
   @hasMany(() => Order)
   orders: Order[];
