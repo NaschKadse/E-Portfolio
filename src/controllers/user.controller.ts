@@ -17,8 +17,10 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
-import {User} from '../models';
-import {UserRepository} from '../repositories';
+import _ from 'lodash';
+import { User } from '../models';
+import { UserRepository } from '../repositories';
+import { validateCredentials } from '../services/validator-service';
 
 
 
@@ -28,12 +30,12 @@ export class UserController {
     public userRepository : UserRepository,
   ) {}
 
-  @post('/users/login')
+  @post('/users/signup')
   @response(200, {
     description: 'User-Login',
     content: {'application/json': {schema: getModelSchemaRef(User, {exclude: ['password'],})}},
   })
-  async create(
+  async signup(
     @requestBody({
       content: {
         'application/json': {
@@ -46,6 +48,7 @@ export class UserController {
     })
     user: Omit<User, 'id'>,
   ): Promise<User> {
+    validateCredentials(_.pick(user, ['email', 'password']))
     return this.userRepository.create(user);
   }
 }
