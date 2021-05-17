@@ -14,6 +14,8 @@ import { MyUserService } from './services/user-service';
 import { JWTService } from './services/jwt-service';
 import { SECURITY_SCHEME_SPEC, SECURITY_SPEC } from './utils/security-spec';
 import { PasswordHasherBindings, TokenServiceBindings, TokenServiceConstants, UserServiceBindings } from './keys';
+import { AuthenticationComponent, registerAuthenticationStrategy } from '@loopback/authentication';
+import { JWTAuthenticationStrategy } from './authentication-strategies/jwt-strategy';
 
 export {ApplicationConfig};
 
@@ -35,6 +37,9 @@ export class EPortfolioApplication extends BootMixin(
 
     // Set up bindings
     this.setupBinding();
+
+    this.component(AuthenticationComponent);
+    registerAuthenticationStrategy(this, JWTAuthenticationStrategy);
 
     // Set up the custom sequence
     this.sequence(MySequence);

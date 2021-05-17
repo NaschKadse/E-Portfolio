@@ -1,3 +1,4 @@
+import { authenticate } from '@loopback/authentication';
 import { inject } from '@loopback/core';
 import {
   Count,
@@ -18,7 +19,7 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
-import { securityId } from '@loopback/security';
+import { SecurityBindings, securityId, UserProfile } from '@loopback/security';
 import _ from 'lodash';
 import { PasswordHasherBindings, TokenServiceBindings, UserServiceBindings } from '../keys';
 import { User } from '../models';
@@ -27,6 +28,7 @@ import { BcryptHasher } from '../services/hash.password.bcrypt-service';
 import { JWTService } from '../services/jwt-service';
 import { MyUserService } from '../services/user-service';
 import { validateCredentials } from '../services/validator-service';
+import { UserProfileSchema } from './specs/user-controller.spec';
 
 
 
@@ -120,5 +122,27 @@ export class UserController {
     const token = await this.jwtService.generateToken(userProfile);
 
     return Promise.resolve({token});
+  }
+
+  @get('/users/me', {
+    responses: {
+      '200': {
+        description: 'The current user profile',
+        content: {
+          'application/json': {
+            schema: UserProfileSchema,
+          },
+        },
+      },
+    },
+  })
+  @authenticate('jwt')
+  async printCurrentUser(
+    @inject(SecurityBindings.USER)
+      currentUserProfile: UserProfile,
+  ): Promise<User> {
+
+    const userId = currentUserProfile[securityId];
+    return this.userRepository.findById(Number(userId));
   }
 }
