@@ -1,3 +1,4 @@
+import { inject } from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -20,6 +21,7 @@ import {
 import _ from 'lodash';
 import { User } from '../models';
 import { UserRepository } from '../repositories';
+import { BcryptHasher } from '../services/hash.password.bcrypt';
 import { validateCredentials } from '../services/validator-service';
 
 
@@ -28,6 +30,8 @@ export class UserController {
   constructor(
     @repository(UserRepository)
     public userRepository : UserRepository,
+    @inject('service.hasher')
+    public hasher: BcryptHasher,
   ) {}
 
   @post('/users/signup')
@@ -48,7 +52,10 @@ export class UserController {
     })
     user: Omit<User, 'id'>,
   ): Promise<User> {
-    validateCredentials(_.pick(user, ['email', 'password']))
+    //validate user credentials
+    validateCredentials(_.pick(user, ['email', 'password']));
+    //encrypt user password
+    user.password = await this.hasher.hashPassword(user.password);
     return this.userRepository.create(user);
   }
 }
