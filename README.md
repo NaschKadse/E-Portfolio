@@ -1,6 +1,6 @@
-# e-portfolio
+# E-Portfolio
 
-Welcome to my e-portfolio, I would like to give you an insight into Loopback 4. LoopBack was developed specifically for REST API development. The architecture of the framework, the developer experience and everything around it are primarily focused on the REST API. The e-portfolio represents a REST API backend and maps the following database schema:
+Welcome to my E-Portfolio, I would like to give you an insight into Loopback 4. LoopBack was developed specifically for REST API development. The architecture of the framework, the developer experience and everything around it are primarily focused on the REST API. The e-portfolio represents a REST API backend and maps the following database schema:
 
 ![Database schema](./database-png/E-Portfolio.png)
 
