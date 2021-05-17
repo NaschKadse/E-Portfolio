@@ -20,7 +20,7 @@ import {
 } from '@loopback/rest';
 import _ from 'lodash';
 import { User } from '../models';
-import { UserRepository } from '../repositories';
+import { Credentials, UserRepository } from '../repositories';
 import { BcryptHasher } from '../services/hash.password.bcrypt';
 import { validateCredentials } from '../services/validator-service';
 
@@ -57,5 +57,51 @@ export class UserController {
     //encrypt user password
     user.password = await this.hasher.hashPassword(user.password);
     return this.userRepository.create(user);
+  }
+
+  @post('/users/login', {
+    responses: {
+      '200': {
+        description: 'Token',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async login(
+    @requestBody({
+      description: 'The input of login function',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'password'],
+            properties: {
+              email: {
+                type: 'string',
+                format: 'email',
+              },
+              password: {
+                type: 'string',
+                minLength: 8,
+              },
+            },
+          },
+        },
+      },
+    }) credentials: Credentials,
+  ): Promise<{token: string}> {
+    return Promise.resolve({token: '1234567890abcdef'});
   }
 }
