@@ -6,7 +6,7 @@ export async function migrate(args: string[]) {
 
   const app = new EPortfolioApplication();
   await app.boot();
-  await app.migrateSchema({existingSchema,  models:['Product', 'Order']});
+  await app.migrateSchema({existingSchema,  models:['Product', 'Order', 'User']});
 
   // Connectors usually keep a pool of opened connections,
   // this keeps the process running even after all work is done.
