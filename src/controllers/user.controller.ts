@@ -23,6 +23,7 @@ import _ from 'lodash';
 import { User } from '../models';
 import { Credentials, UserRepository } from '../repositories';
 import { BcryptHasher } from '../services/hash.password.bcrypt-service';
+import { JWTService } from '../services/jwt-service';
 import { MyUserService } from '../services/user-service';
 import { validateCredentials } from '../services/validator-service';
 
@@ -36,6 +37,8 @@ export class UserController {
     public hasher: BcryptHasher,
     @inject('services.user.service')
     public userService: MyUserService,
+    @inject('services.jwt.service')
+    public jwtService: JWTService,
   ) {}
 
   @post('/users/signup')
@@ -112,6 +115,9 @@ export class UserController {
     // convert a User object into a UserProfile object (reduced set of properties)
     const userProfile = this.userService.convertToUserProfile(user);
 
-    return Promise.resolve({token: '1234567890abcdef'});
+    // create a JSON Web Token based on the user profile
+    const token = await this.jwtService.generateToken(userProfile);
+
+    return Promise.resolve({token});
   }
 }

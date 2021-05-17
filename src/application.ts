@@ -5,12 +5,14 @@ import {
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
 import {RepositoryMixin} from '@loopback/repository';
-import {RestApplication} from '@loopback/rest';
+import {OpenApiSpec, RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
 import { BcryptHasher } from './services/hash.password.bcrypt-service';
 import { MyUserService } from './services/user-service';
+import { JWTService } from './services/jwt-service';
+import { SECURITY_SCHEME_SPEC, SECURITY_SPEC } from './utils/security-spec';
 
 export {ApplicationConfig};
 
@@ -19,6 +21,16 @@ export class EPortfolioApplication extends BootMixin(
 ) {
   constructor(options: ApplicationConfig = {}) {
     super(options);
+
+    const spec: OpenApiSpec = {
+      openapi: '3.0.0',
+      info: {title: 'E-Portfolio', version: '0.0.1'},
+      paths: {},
+      components: {securitySchemes: SECURITY_SCHEME_SPEC},
+      servers: [{url: '/api'}],
+      security: SECURITY_SPEC,
+    };
+    this.api(spec);
 
     // Set up bindings
     this.setupBinding();
@@ -50,5 +62,8 @@ export class EPortfolioApplication extends BootMixin(
     this.bind('service.hasher').toClass(BcryptHasher);
     this.bind('rounds').to(10);
     this.bind('services.user.service').toClass(MyUserService);
+    this.bind('services.jwt.service').toClass(JWTService);
+    this.bind('authentication.jwt.secret').to('1234567890abcdef');
+    this.bind('authentication.jwt.expiresIn').to('7h');
   }
 }
