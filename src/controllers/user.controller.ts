@@ -18,10 +18,12 @@ import {
   requestBody,
   response,
 } from '@loopback/rest';
+import { securityId } from '@loopback/security';
 import _ from 'lodash';
 import { User } from '../models';
 import { Credentials, UserRepository } from '../repositories';
-import { BcryptHasher } from '../services/hash.password.bcrypt';
+import { BcryptHasher } from '../services/hash.password.bcrypt-service';
+import { MyUserService } from '../services/user-service';
 import { validateCredentials } from '../services/validator-service';
 
 
@@ -32,6 +34,8 @@ export class UserController {
     public userRepository : UserRepository,
     @inject('service.hasher')
     public hasher: BcryptHasher,
+    @inject('services.user.service')
+    public userService: MyUserService,
   ) {}
 
   @post('/users/signup')
@@ -102,6 +106,12 @@ export class UserController {
       },
     }) credentials: Credentials,
   ): Promise<{token: string}> {
+    // ensure the user exists, and the password is correct
+    const user = await this.userService.verifyCredentials(credentials);
+
+    // convert a User object into a UserProfile object (reduced set of properties)
+    const userProfile = this.userService.convertToUserProfile(user);
+
     return Promise.resolve({token: '1234567890abcdef'});
   }
 }

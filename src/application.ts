@@ -9,7 +9,8 @@ import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
 import {MySequence} from './sequence';
-import { BcryptHasher } from './services/hash.password.bcrypt';
+import { BcryptHasher } from './services/hash.password.bcrypt-service';
+import { MyUserService } from './services/user-service';
 
 export {ApplicationConfig};
 
@@ -48,5 +49,6 @@ export class EPortfolioApplication extends BootMixin(
   setupBinding(): void {
     this.bind('service.hasher').toClass(BcryptHasher);
     this.bind('rounds').to(10);
+    this.bind('services.user.service').toClass(MyUserService);
   }
 }
