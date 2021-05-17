@@ -1,6 +1,24 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, belongsTo} from '@loopback/repository';
+import {Product} from './product.model';
 
-@model()
+@model({
+  settings: {
+    foreignKeys: {
+      fk_order_userId: {
+        name: 'fk_order_userId',
+        entity: 'User',
+        entityKey: 'id',
+        foreignKey: 'userId',
+      },
+      fk_order_productId: {
+        name: 'fk_order_productId',
+        entity: 'Product',
+        entityKey: 'id',
+        foreignKey: 'productId',
+      },
+    },
+  },
+})
 export class Order extends Entity {
   @property({
     type: 'number',
@@ -21,6 +39,13 @@ export class Order extends Entity {
   })
   date: string;
 
+  @property({
+    type: 'number',
+  })
+  userId?: number;
+
+  @belongsTo(() => Product)
+  productId: number;
 
   constructor(data?: Partial<Order>) {
     super(data);
