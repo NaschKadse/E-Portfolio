@@ -1,3 +1,4 @@
+import {authenticate} from '@loopback/authentication';
 import {
   Count,
   CountSchema,
@@ -70,6 +71,7 @@ export class OrderController {
       },
     },
   })
+  @authenticate('jwt')
   async find(
     @param.filter(Order) filter?: Filter<Order>,
   ): Promise<Order[]> {

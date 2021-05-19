@@ -59,13 +59,8 @@ export class UserController {
     validateCredentials(_.pick(newUserRequest, ['email', 'password']));
     //encrypt user password
     //encrypt the password
-    const password = await this.hasher.hashPassword(
-    newUserRequest.password,
-    );
-   
-    return await this.userRepository.create(
-      _.omit(newUserRequest, 'password'),
-    );
+    newUserRequest.password = await this.hasher.hashPassword(newUserRequest.password);
+    return await this.userRepository.create(newUserRequest)
   }
 
   @post('/users/login', {
